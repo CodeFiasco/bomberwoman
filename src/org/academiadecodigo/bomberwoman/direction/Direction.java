@@ -25,4 +25,19 @@ public enum Direction {
     public int getVertical() {
         return vertical;
     }
+
+    public static Direction randomDirection() {
+        return Direction.values()[(int) (Math.random() * (Direction.values().length))];
+    }
+
+    public Direction differentDirection() {
+
+        Direction newDirection = randomDirection();
+
+        if (newDirection != this && newDirection != STAY) {
+            return newDirection;
+        }
+
+        return this.differentDirection();
+    }
 }

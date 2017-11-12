@@ -6,9 +6,12 @@ import org.academiadecodigo.bomberwoman.Game;
 import org.academiadecodigo.bomberwoman.Utils;
 import org.academiadecodigo.bomberwoman.direction.Direction;
 import org.academiadecodigo.bomberwoman.events.ObjectMoveEvent;
+import org.academiadecodigo.bomberwoman.events.RefreshScreenEvent;
 import org.academiadecodigo.bomberwoman.gameObjects.control.Destroyable;
 import org.academiadecodigo.bomberwoman.gameObjects.control.Movable;
 import org.academiadecodigo.bomberwoman.threads.logic.CollisionDetector;
+
+import java.util.Random;
 
 /**
  * Created by codecadet on 12/11/2017.
@@ -16,12 +19,10 @@ import org.academiadecodigo.bomberwoman.threads.logic.CollisionDetector;
 public class NPC extends GameObject implements Movable, Destroyable {
 
     private Direction direction;
-    private int counter;
 
     public NPC(int id, int x, int y) {
         super(id, GameObjectType.NPC.getDrawChar(), x, y, ConsoleColors.GREEN);
-        direction = null;
-        counter = 0;
+        direction = Direction.randomDirection();
     }
 
 
@@ -31,27 +32,48 @@ public class NPC extends GameObject implements Movable, Destroyable {
     }
 
     @Override
-    public void move() {
+    public boolean move() {
 
-        if(counter % Constants.NPC_RANDONMNESS == 0) {
-            direction = Utils.getRandomDirection();
-        }
+        synchronized (Game.getInstance().getServerThread().getGameObjectMap()) {
 
-        if(CollisionDetector.canMove(getX() + direction.getHorizontal(), getY() + direction.getVertical(), getId())) {
-
-            GameObject gameObjectAt = Utils.getObjectAt(Game.getInstance().getServerThread().getGameObjectMap().values(), getX(), getY());
-
-            if(gameObjectAt.getRepresentation().equals(Constants.PLAYER_CHAR)) {
-
-                synchronized (Game.getInstance().getServerThread().getGameObjectMap()) {
-
-                    Game.getInstance().getServerThread().getGameObjectMap().remove(gameObjectAt.getId());
-                }
+            if (Game.getInstance().getServerThread().getGameObjectMap().get(this.getId()) == null) {
+                return true;
             }
 
-            Game.getInstance().getServerThread().broadcast(new ObjectMoveEvent(this, direction));
+            if (new Random().nextInt(100) < Constants.NPC_ODD) {
+                direction = direction.differentDirection();
+            }
 
+            int newX = getX() + direction.getHorizontal();
+            int newY = getY() + direction.getVertical();
+
+            if (CollisionDetector.canMove(newX, newY)) {
+
+                GameObject gameObjectAt = Utils.getObjectAt(Game.getInstance().getServerThread().getGameObjectMap().values(), newX, newY);
+
+                if (gameObjectAt != null) {
+
+                    System.out.println(gameObjectAt.getRepresentation());
+
+                    if (gameObjectAt instanceof Player) {
+
+                        Game.getInstance().getServerThread().removeObject(gameObjectAt.getId());
+                    }
+
+                }
+
+                Game.getInstance().getServerThread().broadcast(new ObjectMoveEvent(this, direction).toString());
+                System.out.println("moved 212e3213rewfew");
+
+            } else {
+
+                direction = direction.differentDirection();
+            }
         }
+
+        Game.getInstance().getServerThread().broadcast(new RefreshScreenEvent());
+
+        return false;
 
     }
 

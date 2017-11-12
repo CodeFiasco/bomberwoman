@@ -28,7 +28,7 @@ public class CollisionDetector {
         return (gameObject == null || gameObject instanceof Player || gameObject instanceof Powerup);
     }
 
-    public static boolean canMove(int x, int y, int id) {
+    public static boolean canMove(int x, int y) {
 
         if (!(x > 0) || !(x < Game.WIDTH) || !(y > 0) || !(y < Game.HEIGHT - 1)) {
             return false;

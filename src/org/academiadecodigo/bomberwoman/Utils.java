@@ -75,10 +75,6 @@ public class Utils {
         return text.matches("-?\\d+(\\.\\d+)?");
     }
 
-    public static Direction getRandomDirection() {
-         return Direction.values()[(int) (Math.random() * Direction.values().length)];
-    }
-
     public static void quitGame() {
 
         bufferedMode();

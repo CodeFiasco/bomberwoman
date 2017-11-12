@@ -9,6 +9,6 @@ public interface Movable {
 
     Direction getDirection();
 
-    void move();
+    boolean move();
 
 }

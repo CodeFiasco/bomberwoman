@@ -33,8 +33,7 @@ public class Constants {
 
     public static int PORT = 8080;
     public static int BOMB_DELAY = 3000;
-    public static int NPC_RANDONMNESS = 5;
-    public static int NPC_DELAY = 1000;
+    public static int NPC_ODD = 20;
     public static int NPC_INTERVAL = 750;
     public static int BOMB_RADIUS = 1;
     public static int FLAME_DELAY = 500;

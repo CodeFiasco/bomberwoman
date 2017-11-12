@@ -104,14 +104,20 @@ public abstract class ServerEventHandler {
 
     public static void setNPCMove(final NPC npc) {
 
+        System.out.println("Setting NPC");
         Timer timer = new Timer();
 
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                npc.move();
+
+                System.out.println("moving");
+                if (npc.move()) {
+                    this.cancel();
+                }
+
             }
-        }, Constants.NPC_DELAY, Constants.NPC_INTERVAL);
+        }, Constants.NPC_INTERVAL, Constants.NPC_INTERVAL);
     }
 
     public static void handlePickupPowerupEvent(String[] eventInfo, ServerThread serverThread) {
