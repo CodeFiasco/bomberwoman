@@ -31,6 +31,11 @@ public class ClientEventHandler {
 
             spawnObject(goType, id, x, y, game);
 
+            if (goType == GameObjectType.PLAYER) {
+                //System.out.println("x = " + x);
+                //System.out.println("y = " + y);
+            }
+
             if (!shouldRefresh) {
 
                 return;
@@ -73,7 +78,7 @@ public class ClientEventHandler {
 
         synchronized (gameObjectMap) {
 
-            System.out.println(gameObjectMap.remove(Integer.parseInt(eventInfo[2])));
+            gameObjectMap.remove(Integer.parseInt(eventInfo[2]));
         }
 
         game.refreshRenderThread();

@@ -5,11 +5,10 @@ import org.academiadecodigo.bomberwoman.Game;
 import org.academiadecodigo.bomberwoman.Utils;
 import org.academiadecodigo.bomberwoman.direction.Direction;
 import org.academiadecodigo.bomberwoman.events.*;
-import org.academiadecodigo.bomberwoman.gameObjects.GameObject;
-import org.academiadecodigo.bomberwoman.gameObjects.GameObjectFactory;
-import org.academiadecodigo.bomberwoman.gameObjects.GameObjectType;
-import org.academiadecodigo.bomberwoman.gameObjects.Wall;
+import org.academiadecodigo.bomberwoman.gameObjects.*;
 import org.academiadecodigo.bomberwoman.gameObjects.control.Destroyable;
+import org.academiadecodigo.bomberwoman.gameObjects.control.Movable;
+import org.academiadecodigo.bomberwoman.gameObjects.powerups.Powerup;
 import org.academiadecodigo.bomberwoman.levels.ScreenHolder;
 import org.academiadecodigo.bomberwoman.threads.server.ClientDispatcher;
 import org.academiadecodigo.bomberwoman.threads.server.ServerEventHandler;
@@ -19,6 +18,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -31,7 +31,7 @@ public class ServerThread implements Runnable {
 
     private final int[][] PLAYER_SPAWN_POSITIONS = {
             {1, 1},
-            {Game.WIDTH - 2, Game.HEIGHT - 2},
+            {Game.WIDTH - 2, Game.HEIGHT - 5},
             {Game.WIDTH - 2, 1},
             {1, Game.HEIGHT - 2}};
 
@@ -166,6 +166,17 @@ public class ServerThread implements Runnable {
                 case OBJECT_DESTROY:
 
                     //ServerEventHandler.handleObjectDestroyEvent(eventInfo, this);
+                    //Client will never send this event
+                    break;
+
+                case POWERUP_PICKUP:
+
+                    ServerEventHandler.handlePickupPowerupEvent(eventInfo, this);
+                    break;
+
+
+                case PLAYER_QUIT:
+                    closeSocket(Integer.parseInt(eventInfo[2]));
                     break;
             }
         }
@@ -220,6 +231,9 @@ public class ServerThread implements Runnable {
 
             switch (objectChar) {
 
+                case Constants.OBJECT_NPC:
+                    spawnNPC(id, x, y);
+                    break;
                 case Constants.BRICK_CHAR:
                 case Constants.PLAYER_CHAR:
                 case Constants.WALL_CHAR:
@@ -245,9 +259,32 @@ public class ServerThread implements Runnable {
         }
     }
 
+    public GameObject spawnNPC(int id, int x, int y) {
+
+        GameObject gameObject = spawnObject(GameObjectType.NPC, id, x, y, false);
+
+        if(gameObject instanceof NPC) {
+
+            ServerEventHandler.setNPCMove((NPC) gameObject);
+        }
+
+        return gameObject;
+
+    }
+
     public void removeObject(int id) {
 
         synchronized (gameObjectMap) {
+
+            GameObject gameObject = gameObjectMap.get(id);
+            if (gameObject != null && gameObject instanceof Brick) {
+
+                //20%
+                if (new Random().nextInt(100) < Constants.POWERUP_ODD) {
+
+                    spawnObject(GameObjectType.POWER_UP, this.id++, gameObject.getX(), gameObject.getY(), true);
+                }
+            }
 
             gameObjectMap.remove(id);
             broadcast(new ObjectDestroyEvent(id));
@@ -271,6 +308,8 @@ public class ServerThread implements Runnable {
         for (Direction d : Direction.values()) {
             propagateExplosion(d, x, y, blastRadius);
         }
+
+        broadcast(new RefreshScreenEvent());
     }
 
     private void propagateExplosion(Direction dir, int x, int y, int blastRadius) {
@@ -280,33 +319,83 @@ public class ServerThread implements Runnable {
 
         for (int i = 1; i < blastRadius + 1; i++) {
 
-            GameObject gameObject = Utils.getObjectAt(gameObjectMap.values(), x + i * horizontal, y + i * vertical);
+            synchronized (gameObjectMap) {
+                GameObject gameObject = Utils.getObjectAt(gameObjectMap.values(), x + i * horizontal, y + i * vertical);
 
-            if (gameObject instanceof Wall) {
-                break;
+                if (gameObject instanceof Wall) {
+                    break;
+                }
+
+                if(gameObject instanceof Destroyable) {
+                    Player player;
+                    if ((gameObject instanceof Player) && (player = (Player)gameObject).wearingVest()) {
+                        player.stripVest();
+                        break;
+                    }
+
+                    removeObject(gameObject.getId());
+
+                    if (!(gameObject instanceof Player) && !(gameObject instanceof Powerup)) {
+
+                        break;
+                    }
+                }
+
+                ServerEventHandler.setDestroyTimer(spawnObject(GameObjectType.FLAME, id++, x + i * horizontal, y + i * vertical, false), Constants.FLAME_DELAY);
             }
-
-            if(gameObject instanceof Destroyable) {
-                removeObject(gameObject.getId());
-                break;
-            }
-
         }
+    }
+
+    public GameObject spawnBomb(int bombId, Player player) {
+
+        GameObject gameObject = spawnObject(GameObjectType.BOMB, bombId, player.getX(), player.getY(), true);
+
+        if (gameObject instanceof Bomb) {
+
+            ((Bomb) gameObject).setBlastRadius(player.getBombRadius());
+        }
+        return gameObject;
     }
 
     public void closeServer() {
 
-        threadPool.shutdown();
+        broadcast(new ServerCloseEvent());
 
         for (Socket s : clientConnections) {
 
             try {
 
-                s.close();
+                if (s == null || s.isClosed()) {
 
+                    continue;
+                }
+
+                s.close();
             } catch (IOException e) {
                 e.getMessage();
             }
         }
+
+        try {
+
+            serverSocket.close();
+        } catch (IOException e) {
+            Utils.bufferedMode();
+            e.printStackTrace();
+        }
     }
+
+    private void closeSocket(int playerId) {
+
+        try {
+            clientConnections[playerId - 4000].close();
+            clientConnections[playerId - 4000] = null;
+
+            removeObject(playerId);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

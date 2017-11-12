@@ -8,6 +8,7 @@ import org.academiadecodigo.bomberwoman.direction.Direction;
 import org.academiadecodigo.bomberwoman.events.ObjectMoveEvent;
 import org.academiadecodigo.bomberwoman.gameObjects.control.Destroyable;
 import org.academiadecodigo.bomberwoman.gameObjects.control.Movable;
+import org.academiadecodigo.bomberwoman.threads.logic.CollisionDetector;
 
 /**
  * Created by codecadet on 12/11/2017.
@@ -36,7 +37,21 @@ public class NPC extends GameObject implements Movable, Destroyable {
             direction = Utils.getRandomDirection();
         }
 
-        Game.getInstance().getServerThread().broadcast(new ObjectMoveEvent(this, direction));
+        if(CollisionDetector.canMove(getX() + direction.getHorizontal(), getY() + direction.getVertical(), getId())) {
+
+            GameObject gameObjectAt = Utils.getObjectAt(Game.getInstance().getServerThread().getGameObjectMap().values(), getX(), getY());
+
+            if(gameObjectAt.getRepresentation().equals(Constants.PLAYER_CHAR)) {
+
+                synchronized (Game.getInstance().getServerThread().getGameObjectMap()) {
+
+                    Game.getInstance().getServerThread().getGameObjectMap().remove(gameObjectAt.getId());
+                }
+            }
+
+            Game.getInstance().getServerThread().broadcast(new ObjectMoveEvent(this, direction));
+
+        }
 
     }
 

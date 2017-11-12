@@ -104,7 +104,7 @@ class ScreenFrame {
         cells[x][y] = objectString;
     }
 
-    String getContent() {
+    synchronized String getContent() {
 
         return content.toString();
     }

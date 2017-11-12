@@ -9,6 +9,8 @@ import org.academiadecodigo.bomberwoman.gameObjects.Bomb;
 import org.academiadecodigo.bomberwoman.gameObjects.GameObject;
 import org.academiadecodigo.bomberwoman.gameObjects.GameObjectType;
 import org.academiadecodigo.bomberwoman.gameObjects.NPC;
+import org.academiadecodigo.bomberwoman.gameObjects.Player;
+import org.academiadecodigo.bomberwoman.gameObjects.powerups.Powerup;
 import org.academiadecodigo.bomberwoman.threads.ServerThread;
 
 import java.util.Timer;
@@ -21,13 +23,13 @@ public abstract class ServerEventHandler {
 
     public static int handleObjectSpawnEvent(String[] eventInfo, Integer id, ServerThread serverThread) {
 
-        if(!Utils.isNumber(eventInfo[2]) || !Utils.isNumber(eventInfo[3]) || !Utils.isNumber(eventInfo[4]) || !Utils.isNumber(eventInfo[5])) {
+        if (!Utils.isNumber(eventInfo[2]) || !Utils.isNumber(eventInfo[3]) || !Utils.isNumber(eventInfo[4]) || !Utils.isNumber(eventInfo[5])) {
 
             System.out.println("not a number!");
             return id;
         }
 
-        if(!GameObject.isGameObject(Integer.parseInt(eventInfo[2]))) {
+        if (!GameObject.isGameObject(Integer.parseInt(eventInfo[2]))) {
             System.out.println("not a game object!");
             return id;
         }
@@ -36,15 +38,22 @@ public abstract class ServerEventHandler {
         int x = Integer.parseInt(eventInfo[4]);
         int y = Integer.parseInt(eventInfo[5]);
 
-        GameObject gameObject = serverThread.spawnObject(gameObjectType, id, x, y, true);
+        switch (gameObjectType) {
 
-        if(gameObjectType == GameObjectType.BOMB) {
+            case BOMB:
+                GameObject player = Utils.getObjectAt(serverThread.getGameObjectMap().values(), x, y);
+                if (player == null || !(player instanceof Player)) {
 
-            setBombExplode((Bomb) gameObject);
-        }
+                    return id;
+                }
 
-        if(gameObjectType == GameObjectType.NPC) {
-            setNPCMove((NPC) gameObject);
+                GameObject bomb = serverThread.spawnBomb(id, (Player) player);
+                setDestroyTimer(bomb, Constants.BOMB_DELAY);
+                break;
+
+            default:
+                serverThread.spawnObject(gameObjectType, id, x, y, true);
+                break;
         }
 
         return ++id;
@@ -52,7 +61,7 @@ public abstract class ServerEventHandler {
 
     public static void handleObjectMoveEvent(String[] eventInfo, ServerThread serverThread) {
 
-        if(!Utils.isNumber(eventInfo[2]) || !Utils.isNumber(eventInfo[3]) || !Utils.isNumber(eventInfo[4])) {
+        if (!Utils.isNumber(eventInfo[2]) || !Utils.isNumber(eventInfo[3]) || !Utils.isNumber(eventInfo[4])) {
 
             System.out.println("not a number!");
             return;
@@ -64,7 +73,7 @@ public abstract class ServerEventHandler {
 
         GameObject gameObject = serverThread.getGameObjectMap().get(id);
 
-        if(gameObject == null) {
+        if (gameObject == null) {
             return;
         }
 
@@ -72,23 +81,28 @@ public abstract class ServerEventHandler {
         serverThread.broadcast(new ObjectMoveEvent(gameObject, Direction.STAY).toString());
     }
 
-    private static void setBombExplode(final Bomb bomb) {
+    public static void setDestroyTimer(final GameObject object, int delay) {
 
         Timer timer = new Timer();
 
         timer.schedule(new TimerTask() {
+
             @Override
             public void run() {
 
-                if(Game.getInstance().getServerThread().getGameObjectMap().get(bomb.getId()) != null) {
+                if (Game.getInstance().getServerThread().getGameObjectMap().get(object.getId()) != null) {
 
-                    bomb.explode();
+                    if (object instanceof Bomb) {
+                        ((Bomb) object).explode();
+                    } else {
+                        Game.getInstance().getServerThread().removeObject(object.getId());
+                    }
                 }
             }
-        }, Constants.BOMB_DELAY);
+        }, delay);
     }
 
-    private static void setNPCMove(final NPC npc) {
+    public static void setNPCMove(final NPC npc) {
 
         Timer timer = new Timer();
 
@@ -100,4 +114,42 @@ public abstract class ServerEventHandler {
         }, Constants.NPC_DELAY, Constants.NPC_INTERVAL);
     }
 
+    public static void handlePickupPowerupEvent(String[] eventInfo, ServerThread serverThread) {
+
+        if (!Utils.isNumber(eventInfo[2]) || !Utils.isNumber(eventInfo[3])) {
+
+            System.out.println("not a number!");
+            return;
+        }
+
+        int powerUpId = Integer.parseInt(eventInfo[2]);
+        GameObject powerup = serverThread.getGameObjectMap().get(powerUpId);
+
+        if (powerup == null || !(powerup instanceof Powerup)) {
+
+            //Huh? Should not happen...
+            return;
+        }
+
+        int playerId = Integer.parseInt(eventInfo[3]);
+        GameObject player = serverThread.getGameObjectMap().get(playerId);
+
+        if (player == null || !(player instanceof Player)) {
+
+            return;
+        }
+
+        switch (((Powerup) powerup).getPowerupType()) {
+
+            case BOMB_RADIUS_INCREASE:
+                ((Player) player).increaseBombRadius();
+                break;
+
+            case VEST:
+                ((Player) player).wearVest();
+                break;
+        }
+
+        serverThread.removeObject(powerUpId);
+    }
 }
