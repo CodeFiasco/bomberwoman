@@ -17,6 +17,9 @@ public class PowerupFactory {
             case VEST:
                 return new PowerupVest(id, x, y);
 
+            case GHOST_MODE:
+                return new PowerupGhostMode(id, x, y);
+
             case BOMB_RADIUS_INCREASE:
             default:
                 return new PowerupBombRadius(id, x, y);

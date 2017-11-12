@@ -103,6 +103,19 @@ public abstract class ServerEventHandler {
         }, delay);
     }
 
+    public static void setGhostModeTimer(Player player, int delay) {
+
+        Timer timer = new Timer();
+
+        timer.schedule(new TimerTask() {
+
+            @Override
+            public void run() {
+                player.setGhostMode(false);
+            }
+        }, delay);
+    }
+
     public static void handlePickupPowerupEvent(String[] eventInfo, ServerThread serverThread) {
 
         if(!Utils.isNumber(eventInfo[2]) || !Utils.isNumber(eventInfo[3])) {
@@ -136,6 +149,9 @@ public abstract class ServerEventHandler {
 
             case VEST:
                 ((Player) player).wearVest();
+                break;
+
+            case GHOST_MODE:
                 break;
         }
 

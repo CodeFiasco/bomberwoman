@@ -34,6 +34,7 @@ public class Constants {
     public static int BOMB_DELAY = 3000;
     public static int BOMB_RADIUS = 1;
     public static int FLAME_DELAY = 500;
+    public static int GHOST_MODE_DURATION = 3000;
 
     public static String PLAYER_COLOR = ConsoleColors.GREEN;
     public static String ENEMY_PLAYER_COLOR = ConsoleColors.RED;

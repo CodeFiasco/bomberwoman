@@ -5,6 +5,7 @@ import org.academiadecodigo.bomberwoman.events.ObjectMoveEvent;
 import org.academiadecodigo.bomberwoman.events.ObjectSpawnEvent;
 import org.academiadecodigo.bomberwoman.gameObjects.GameObject;
 import org.academiadecodigo.bomberwoman.gameObjects.GameObjectType;
+import org.academiadecodigo.bomberwoman.gameObjects.Player;
 import org.academiadecodigo.bomberwoman.threads.input.Keys;
 import org.academiadecodigo.bomberwoman.threads.logic.CollisionDetector;
 
@@ -36,11 +37,11 @@ public class LogicThread implements Runnable {
 
         GameObject go = gameObjects.get(playerId);
 
-        if(go == null) {
+        if (go == null) {
             return;
         }
 
-        switch(keyPressed) {
+        switch (keyPressed) {
 
             case UP:
             case DOWN:
@@ -58,7 +59,7 @@ public class LogicThread implements Runnable {
 
     private void move(GameObject go, Direction direction) {
 
-        if(!checkMove(direction, go)) {
+        if (!checkMove(direction, go)) {
 
             return;
         }
@@ -76,7 +77,13 @@ public class LogicThread implements Runnable {
         int vertical = direction.getVertical();
         int horizontal = direction.getHorizontal();
 
-        return CollisionDetector.canMove(go.getX() + horizontal, go.getY() + vertical, go.getId(), networkThread);
+        if (go instanceof Player) {
+            Player player = (Player) go;
+            return CollisionDetector.canMove(go.getX() + horizontal, go.getY() + vertical, go.getId(),
+                    networkThread, player.isGhost());
+        }
+        return CollisionDetector.canMove(go.getX() + horizontal, go.getY() + vertical, go.getId(),
+                networkThread, false);
     }
 
     public void setNetworkThread(NetworkThread networkThread) {

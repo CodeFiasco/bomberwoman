@@ -12,10 +12,14 @@ import org.academiadecodigo.bomberwoman.threads.NetworkThread;
  */
 public class CollisionDetector {
 
-    public static boolean canMove(int x, int y, int playerId, NetworkThread networkThread) {
+    public static boolean canMove(int x, int y, int playerId, NetworkThread networkThread, boolean ghostMode) {
 
         if (!(x > 0) || !(x < Game.WIDTH) || !(y > 0) || !(y < Game.HEIGHT - 1)) {
             return false;
+        }
+
+        if (ghostMode) {
+            return true;
         }
 
         GameObject gameObject = Utils.getObjectAt(Game.getInstance().getGameObjects().values(), x, y);

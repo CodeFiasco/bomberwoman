@@ -11,6 +11,7 @@ public class Player extends GameObject implements Destroyable {
 
     private int bombRadius = Constants.BOMB_RADIUS;
     private boolean vest;
+    private boolean ghost;
 
     public Player(int id, int x, int y, boolean self) {
 
@@ -27,6 +28,14 @@ public class Player extends GameObject implements Destroyable {
 
     public void wearVest() {
         vest = true;
+    }
+
+    public void setGhostMode(boolean mode) {
+        ghost = mode;
+    }
+
+    public boolean isGhost() {
+        return ghost;
     }
 
     public int getBombRadius() {
