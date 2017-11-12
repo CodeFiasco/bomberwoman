@@ -14,6 +14,7 @@ public enum GameObjectType {
     BLUE_WALL(Constants.WALL_CHAR_BLUE),
     BOMB(Constants.OBJECT_BOMB),
     FLAME(Constants.OBJECT_FLAME),
+    NPC(Constants.OBJECT_NPC),
     EMPTY(" ");
 
     private String drawChar;

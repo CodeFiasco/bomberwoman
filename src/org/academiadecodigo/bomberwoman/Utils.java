@@ -1,5 +1,6 @@
 package org.academiadecodigo.bomberwoman;
 
+import org.academiadecodigo.bomberwoman.direction.Direction;
 import org.academiadecodigo.bomberwoman.gameObjects.GameObject;
 import org.academiadecodigo.bomberwoman.threads.ServerThread;
 
@@ -72,6 +73,10 @@ public class Utils {
     public static boolean isNumber(String text) {
 
         return text.matches("-?\\d+(\\.\\d+)?");
+    }
+
+    public static Direction getRandomDirection() {
+         return Direction.values()[(int) (Math.random() * Direction.values().length)];
     }
 
     public static void quitGame() {

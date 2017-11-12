@@ -8,6 +8,7 @@ import org.academiadecodigo.bomberwoman.events.ObjectMoveEvent;
 import org.academiadecodigo.bomberwoman.gameObjects.Bomb;
 import org.academiadecodigo.bomberwoman.gameObjects.GameObject;
 import org.academiadecodigo.bomberwoman.gameObjects.GameObjectType;
+import org.academiadecodigo.bomberwoman.gameObjects.NPC;
 import org.academiadecodigo.bomberwoman.threads.ServerThread;
 
 import java.util.Timer;
@@ -42,6 +43,10 @@ public abstract class ServerEventHandler {
             setBombExplode((Bomb) gameObject);
         }
 
+        if(gameObjectType == GameObjectType.NPC) {
+            setNPCMove((NPC) gameObject);
+        }
+
         return ++id;
     }
 
@@ -67,7 +72,7 @@ public abstract class ServerEventHandler {
         serverThread.broadcast(new ObjectMoveEvent(gameObject, Direction.STAY).toString());
     }
 
-    public static void setBombExplode(final Bomb bomb) {
+    private static void setBombExplode(final Bomb bomb) {
 
         Timer timer = new Timer();
 
@@ -81,6 +86,18 @@ public abstract class ServerEventHandler {
                 }
             }
         }, Constants.BOMB_DELAY);
+    }
+
+    private static void setNPCMove(final NPC npc) {
+
+        Timer timer = new Timer();
+
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                npc.move();
+            }
+        }, Constants.NPC_DELAY, Constants.NPC_INTERVAL);
     }
 
 }

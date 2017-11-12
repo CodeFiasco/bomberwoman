@@ -31,6 +31,9 @@ public class GameObjectFactory {
             case BOMB:
                 return new Bomb(id, x ,y);
 
+            case NPC:
+                return new NPC(id, x, y);
+
             case EMPTY:
             default:
                 return new GameObject(id, " ", x, y);

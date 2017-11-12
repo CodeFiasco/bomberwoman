@@ -22,6 +22,7 @@ public class Constants {
     public static String OBJECT_PLAYER_POINTER = "@";
     public static String OBJECT_BOMB = "δ";
     public static String OBJECT_FLAME = "Θ";
+    public static String OBJECT_NPC = "B";
 
     public static final int TERMINAL_WIDTH = 120;
     public static final int TERMINAL_HEIGHT = 40;
@@ -29,4 +30,7 @@ public class Constants {
     public static int PORT = 8080;
     public static int BOMB_DELAY = 3000;
     public static int BOMB_RADIUS = 2;
+    public static int NPC_RANDONMNESS = 5;
+    public static int NPC_DELAY = 1000;
+    public static int NPC_INTERVAL = 2000;
 }
